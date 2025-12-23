@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>My Notes - Offline Notes App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-color: #5d6afb;
+            --primary-light: #eef0ff;
+            --primary-dark: #4a56cc;
+            --surface-color: #ffffff;
+            --background-color: #f8f9fa;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-disabled: #9aa0a6;
+            --divider-color: #dadce0;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --shadow-hover: rgba(0, 0, 0, 0.12);
+            --success-color: #34a853;
+            --warning-color: #fbbc04;
+            --danger-color: #ea4335;
+            --border-radius: 16px;
+            --transition-speed: 0.2s;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* App Header */
+        .app-header {
+            background-color: var(--surface-color);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .notes-count {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* Notes Container */
+        .notes-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 70vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .empty-state i {
+            font-size: 80px;
+            color: var(--divider-color);
+            margin-bottom: 24px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            color: var(--text-disabled);
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        /* Notes List */
+        .notes-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        /* Note Card */
+        .note-card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 18px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            transition: all var(--transition-speed) ease;
+            cursor: pointer;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .note-card:active {
+            transform: scale(0.99);
+            box-shadow: 0 1px 4px var(--shadow-color);
+            background-color: var(--primary-light);
+        }
+
+        .note-card:hover {
+            box-shadow: 0 4px 12px var(--shadow-hover);
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-preview {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .note-date {
+            font-size: 13px;
+            color: var(--text-disabled);
+            display: flex;
+            align-items: center;
+        }
+
+        .note-date i {
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        /* Note Colors */
+        .note-card[data-color="blue"] { border-left-color: #5d6afb; }
+        .note-card[data-color="green"] { border-left-color: #34a853; }
+        .note-card[data-color="orange"] { border-left-color: #fbbc04; }
+        .note-card[data-color="purple"] { border-left-color: #a142f4; }
+        .note-card[data-color="pink"] { border-left-color: #f538b0; }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(93, 106, 251, 0.3);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            z-index: 100;
+            font-size: 24px;
+            text-decoration: none;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+            background-color: var(--primary-dark);
+            box-shadow: 0 2px 10px rgba(93, 106, 251, 0.4);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--divider-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-disabled);
+        }
+
+        /* App Footer */
+        .app-footer {
+            background-color: var(--surface-color);
+            padding: 16px 20px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-disabled);
+            border-top: 1px solid var(--divider-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .app-header {
+                padding: 16px;
+            }
+            
+            .notes-container {
+                padding: 16px;
+                padding-bottom: 80px;
+            }
+            
+            .fab {
+                bottom: 24px;
+                right: 24px;
+                width: 56px;
+                height: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <h1 class="app-title">My Notes</h1>
+        <div class="notes-count" id="notesCount">0 notes</div>
+    </header>
+
+    <!-- Notes Container -->
+    <main class="notes-container">
+        <div id="notesList" class="notes-list">
+            <!-- Notes will be dynamically inserted here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-sticky-note"></i>
+            <h3>No notes yet</h3>
+            <p>Tap the <strong>+</strong> button below to create your first note</p>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <a href="add.html" class="fab" id="addNoteBtn">
+        <i class="fas fa-plus"></i>
+    </a>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+        <p>Offline Notes App • All data stored locally</p>
+    </footer>
+
+    <script>
+        // Notes data structure
+        const notes = [
+            {
+                id: 1,
+                title: "Welcome to Notes App",
+                content: "This is your first note. Tap to edit or press the + button to create a new note. All notes are saved locally on your device.",
+                date: "2023-10-15",
+                color: "blue"
+            },
+            {
+                id: 2,
+                title: "Shopping List",
+                content: "Milk, Eggs, Bread, Coffee, Fruits, Vegetables, Chicken, Pasta, Cheese, Yogurt",
+                date: "2023-10-14",
+                color: "green"
+            },
+            {
+                id: 3,
+                title: "Meeting Notes",
+                content: "Discuss project timeline with team. Review Q3 goals and prepare presentation for stakeholders.",
+                date: "2023-10-13",
+                color: "orange"
+            },
+            {
+                id: 4,
+                title: "Ideas for Vacation",
+                content: "Beach destination, mountain hiking, cultural city tour, camping trip, road trip along the coast.",
+                date: "2023-10-12",
+                color: "purple"
+            },
+            {
+                id: 5,
+                title: "Book Recommendations",
+                content: "Atomic Habits by James Clear, Deep Work by Cal Newport, Thinking Fast and Slow by Daniel Kahneman",
+                date: "2023-10-10",
+                color: "pink"
+            }
+        ];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load notes from localStorage or use default notes
+            let savedNotes = localStorage.getItem('offlineNotes');
+            let notesData = savedNotes ? JSON.parse(savedNotes) : notes;
+            
+            // Save default notes if not already saved
+            if (!savedNotes) {
+                localStorage.setItem('offlineNotes', JSON.stringify(notes));
+            }
+            
+            // Display notes
+            displayNotes(notesData);
+            
+            // Update notes count
+            updateNotesCount(notesData.length);
+            
+            // Set up event listeners for note cards
+            setupNoteCardListeners();
+        });
+
+        // Display notes in the UI
+        function displayNotes(notesArray) {
+            const notesList = document.getElementById('notesList');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Clear current list
+            notesList.innerHTML = '';
+            
+            // Show empty state if no notes
+            if (notesArray.length === 0) {
+                emptyState.style.display = 'flex';
+                return;
+            }
+            
+            // Hide empty state
+            emptyState.style.display = 'none';
+            
+            // Create note cards
+            notesArray.forEach(note => {
+                const noteCard = document.createElement('div');
+                noteCard.className = 'note-card';
+                noteCard.setAttribute('data-id', note.id);
+                noteCard.setAttribute('data-color', note.color);
+                
+                // Limit preview text to 80 characters
+                const previewText = note.content.length > 80 
+                    ? note.content.substring(0, 80) + '...' 
+                    : note.content;
+                
+                // Format date
+                const formattedDate = formatDate(note.date);
+                
+                noteCard.innerHTML = `
+                    <div class="note-title">${note.title}</div>
+                    <div class="note-preview">${previewText}</div>
+                    <div class="note-date">
+                        <i class="far fa-calendar"></i>
+                        ${formattedDate}
+                    </div>
+                `;
+                
+                notesList.appendChild(noteCard);
+            });
+        }
+
+        // Update notes count display
+        function updateNotesCount(count) {
+            const notesCount = document.getElementById('notesCount');
+            notesCount.textContent = `${count} ${count === 1 ? 'note' : 'notes'}`;
+        }
+
+        // Format date to readable format
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: now.getFullYear() !== date.getFullYear() ? 'numeric' : undefined
+            });
+        }
+
+        // Set up event listeners for note cards
+        function setupNoteCardListeners() {
+            // Note cards are dynamically generated, so we use event delegation
+            document.addEventListener('click', function(event) {
+                const noteCard = event.target.closest('.note-card');
+                if (noteCard) {
+                    // Add active state for tap effect
+                    noteCard.style.backgroundColor = 'var(--primary-light)';
+                    
+                    // Simulate navigation to edit page
+                    const noteId = noteCard.getAttribute('data-id');
+                    setTimeout(() => {
+                        noteCard.style.backgroundColor = '';
+                        // In a real app, this would redirect to edit.html with note id
+                        // window.location.href = `edit.html?id=${noteId}`;
+                        alert(`Navigating to edit note with ID: ${noteId}\n\nIn the full app, this would open the edit page.`);
+                    }, 150);
+                }
+            });
+        }
+
+        // Simulate adding a new note (for demo purposes)
+        document.getElementById('addNoteBtn').addEventListener('click', function(e) {
+            // In a real app, this would navigate to add.html
+            // Here we'll just simulate adding a note for demo
+            e.preventDefault();
+            
+            // Get saved notes
+            let savedNotes = JSON.parse(localStorage.getItem('offlineNotes') || '[]');
+            
+            // Create a new note
+            const newNote = {
+                id: savedNotes.length > 0 ? Math.max(...savedNotes.map(n => n.id)) + 1 : 1,
+                title: "New Note",
+                content: "This is a newly created note. Tap to edit and add your content here.",
+                date: new Date().toISOString().split('T')[0],
+                color: ["blue", "green", "orange", "purple", "pink"][Math.floor(Math.random() * 5)]
+            };
+            
+            // Add to saved notes
+            savedNotes.unshift(newNote);
+            localStorage.setItem('offlineNotes', JSON.stringify(savedNotes));
+            
+            // Update UI
+            displayNotes(savedNotes);
+            updateNotesCount(savedNotes.length);
+            
+            // Show success message
+            alert("New note created! Tap on it to edit.");
+        });
+    </script>
+</body>
+</html>
